@@ -9,7 +9,7 @@ from app.config import get_settings
 from app.models.database import init_db
 from app.models.schemas import HealthResponse
 from app.services.llm_service import llm_service
-from app.api.routes import subjects, sessions, capture, chat
+from app.api.routes import subjects, sessions, capture, chat, flashcards, quiz
 
 settings = get_settings()
 
@@ -60,6 +60,8 @@ app.include_router(subjects.router)
 app.include_router(sessions.router)
 app.include_router(capture.router)
 app.include_router(chat.router)
+app.include_router(flashcards.router)
+app.include_router(quiz.router)
 
 
 @app.get("/api/health", response_model=HealthResponse)
