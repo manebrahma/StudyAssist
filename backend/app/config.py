@@ -18,9 +18,9 @@ class Settings(BaseSettings):
 
     # Ollama
     ollama_base_url: str = "http://localhost:11434"
-    ollama_text_model: str = "llama3.1"
+    ollama_text_model: str = "phi3"
     ollama_vision_model: str = "llava"
-    ollama_timeout: int = 120  # seconds
+    ollama_timeout: int = 300  # seconds — phi3 on CPU can be slow
 
     # File uploads
     upload_dir: str = "uploads"
