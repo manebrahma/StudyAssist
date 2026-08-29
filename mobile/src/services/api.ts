@@ -40,6 +40,9 @@ export const getTopics = (subjectId: string) =>
 export const createTopic = (subjectId: string, data: TopicCreate) =>
   api.post<Topic>(`/subjects/${subjectId}/topics`, data).then((r) => r.data);
 
+export const deleteTopic = (subjectId: string, topicId: string) =>
+  api.delete(`/subjects/${subjectId}/topics/${topicId}`);
+
 // ──── Sessions ────
 export const getSessions = (subjectId?: string, topicId?: string) => {
   const params: Record<string, string> = {};

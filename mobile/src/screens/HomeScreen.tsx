@@ -118,9 +118,8 @@ export default function HomeScreen() {
             key={session.id}
             style={styles.sessionCard}
             onPress={() =>
-              navigation.navigate("Chat", {
+              navigation.navigate("SessionDetail", {
                 sessionId: session.id,
-                title: session.title,
               })
             }
           >

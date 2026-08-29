@@ -11,6 +11,8 @@ import SubjectsScreen from "../screens/SubjectsScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import PreviewScreen from "../screens/PreviewScreen";
 import ChatScreen from "../screens/ChatScreen";
+import SessionDetailScreen from "../screens/SessionDetailScreen";
+import SubjectSessionsScreen from "../screens/SubjectSessionsScreen";
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -73,6 +75,16 @@ export default function AppNavigator() {
         />
         <Stack.Screen name="Preview" component={PreviewScreen} options={{ title: "Preview" }} />
         <Stack.Screen name="Chat" component={ChatScreen} options={({ route }) => ({ title: route.params.title })} />
+        <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{ title: "Session" }} />
+        <Stack.Screen
+          name="SubjectSessions"
+          component={SubjectSessionsScreen}
+          options={({ route }) => ({
+            title: route.params.topicName
+              ? `${route.params.subjectName} › ${route.params.topicName}`
+              : route.params.subjectName,
+          })}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

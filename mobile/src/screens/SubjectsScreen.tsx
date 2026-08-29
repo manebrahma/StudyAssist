@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,14 +9,21 @@ import {
   Alert,
   RefreshControl,
 } from "react-native";
-import { Subject, Topic } from "../types";
-import { getSubjects, createSubject, deleteSubject, getTopics, createTopic } from "../services/api";
+import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList, Subject, Topic } from "../types";
+import { getSubjects, createSubject, deleteSubject, getTopics, createTopic, deleteTopic, getSessions } from "../services/api";
 
 const COLORS = ["#E74C3C", "#3498DB", "#2ECC71", "#9B59B6", "#F39C12", "#1ABC9C", "#E67E22", "#34495E"];
 
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
 export default function SubjectsScreen() {
+  const navigation = useNavigation<Nav>();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [topics, setTopics] = useState<Record<string, Topic[]>>({});
+  const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
   const [newSubject, setNewSubject] = useState("");
   const [newTopic, setNewTopic] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -26,6 +33,19 @@ export default function SubjectsScreen() {
     try {
       const data = await getSubjects();
       setSubjects(data);
+      // Fetch session counts per subject
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        data.map(async (s) => {
+          try {
+            const sessions = await getSessions(s.id);
+            counts[s.id] = sessions.length;
+          } catch {
+            counts[s.id] = 0;
+          }
+        })
+      );
+      setSessionCounts(counts);
     } catch {
       // offline
     } finally {
@@ -33,9 +53,11 @@ export default function SubjectsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchSubjects();
-  }, [fetchSubjects]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchSubjects();
+    }, [fetchSubjects])
+  );
 
   const handleAddSubject = async () => {
     if (!newSubject.trim()) return;
@@ -61,6 +83,25 @@ export default function SubjectsScreen() {
             fetchSubjects();
           } catch {
             Alert.alert("Error", "Failed to delete subject");
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleDeleteTopic = (subjectId: string, topicId: string, name: string) => {
+    Alert.alert("Delete Topic", `Delete "${name}"?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteTopic(subjectId, topicId);
+            const data = await getTopics(subjectId);
+            setTopics((prev) => ({ ...prev, [subjectId]: data }));
+          } catch {
+            Alert.alert("Error", "Failed to delete topic");
           }
         },
       },
@@ -98,6 +139,7 @@ export default function SubjectsScreen() {
   const renderSubject = ({ item }: { item: Subject }) => {
     const isExpanded = expandedId === item.id;
     const subjectTopics = topics[item.id] || [];
+    const count = sessionCounts[item.id] || 0;
 
     return (
       <View style={styles.subjectCard}>
@@ -107,16 +149,33 @@ export default function SubjectsScreen() {
           onLongPress={() => handleDeleteSubject(item.id, item.name)}
         >
           <View style={[styles.colorDot, { backgroundColor: item.color }]} />
-          <Text style={styles.subjectName}>{item.name}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.subjectName}>{item.name}</Text>
+            <Text style={styles.sessionCount}>
+              {count} {count === 1 ? "session" : "sessions"}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.viewSessionsBtn}
+            onPress={() => navigation.navigate("SubjectSessions", { subjectId: item.id, subjectName: item.name })}
+          >
+            <Text style={styles.viewSessionsBtnText}>View</Text>
+          </TouchableOpacity>
           <Text style={styles.expandIcon}>{isExpanded ? "▼" : "▶"}</Text>
         </TouchableOpacity>
 
         {isExpanded && (
           <View style={styles.topicsList}>
             {subjectTopics.map((topic) => (
-              <View key={topic.id} style={styles.topicItem}>
+              <TouchableOpacity
+                key={topic.id}
+                style={styles.topicItem}
+                onPress={() => navigation.navigate("SubjectSessions", { subjectId: item.id, subjectName: item.name, topicId: topic.id, topicName: topic.name })}
+                onLongPress={() => handleDeleteTopic(item.id, topic.id, topic.name)}
+              >
                 <Text style={styles.topicName}>  {topic.name}</Text>
-              </View>
+                <Text style={styles.topicArrow}>›</Text>
+              </TouchableOpacity>
             ))}
             <View style={styles.addTopicRow}>
               <TextInput
@@ -215,7 +274,16 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   colorDot: { width: 12, height: 12, borderRadius: 6, marginRight: 12 },
-  subjectName: { color: "#fff", fontSize: 16, fontWeight: "600", flex: 1 },
+  subjectName: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  sessionCount: { color: "#888", fontSize: 11, marginTop: 2 },
+  viewSessionsBtn: {
+    backgroundColor: "#2a2a4e",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 10,
+  },
+  viewSessionsBtnText: { color: "#4A90D9", fontSize: 12, fontWeight: "600" },
   expandIcon: { color: "#888", fontSize: 12 },
   topicsList: {
     paddingHorizontal: 14,
@@ -223,8 +291,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#2a2a4e",
   },
-  topicItem: { paddingVertical: 8 },
-  topicName: { color: "#ccc", fontSize: 14 },
+  topicItem: { paddingVertical: 8, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  topicName: { color: "#ccc", fontSize: 14, flex: 1 },
+  topicArrow: { color: "#666", fontSize: 16, marginLeft: 8 },
   addTopicRow: { flexDirection: "row", marginTop: 8, gap: 8 },
   topicInput: {
     flex: 1,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,8 +13,8 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
-import { RootStackParamList } from "../types";
-import { createSession, captureImage } from "../services/api";
+import { RootStackParamList, Subject, Topic } from "../types";
+import { createSession, captureImage, getSubjects, getTopics } from "../services/api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, "Preview">;
@@ -27,6 +27,24 @@ export default function PreviewScreen() {
   const [title, setTitle] = useState("");
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState("");
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [availableTopics, setAvailableTopics] = useState<Topic[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getSubjects().then(setSubjects).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (selectedSubjectId) {
+      getTopics(selectedSubjectId).then(setAvailableTopics).catch(() => setAvailableTopics([]));
+      setSelectedTopicId(null);
+    } else {
+      setAvailableTopics([]);
+      setSelectedTopicId(null);
+    }
+  }, [selectedSubjectId]);
 
   const processImage = async () => {
     if (!title.trim()) {
@@ -38,7 +56,11 @@ export default function PreviewScreen() {
     try {
       // Step 1: Create session
       setStep("Creating session...");
-      const session = await createSession({ title: title.trim() });
+      const session = await createSession({
+        title: title.trim(),
+        subject_id: selectedSubjectId || undefined,
+        topic_id: selectedTopicId || undefined,
+      });
 
       // Step 2: Upload & process image
       setStep("Extracting text from image...");
@@ -72,6 +94,51 @@ export default function PreviewScreen() {
         onChangeText={setTitle}
         editable={!processing}
       />
+
+      {/* Subject Picker */}
+      <Text style={styles.label}>Subject (optional)</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+        <TouchableOpacity
+          style={[styles.chip, !selectedSubjectId && styles.chipSelected]}
+          onPress={() => setSelectedSubjectId(null)}
+        >
+          <Text style={[styles.chipText, !selectedSubjectId && styles.chipTextSelected]}>None</Text>
+        </TouchableOpacity>
+        {subjects.map((s) => (
+          <TouchableOpacity
+            key={s.id}
+            style={[styles.chip, selectedSubjectId === s.id && styles.chipSelected, { borderColor: s.color }]}
+            onPress={() => setSelectedSubjectId(s.id)}
+          >
+            <View style={[styles.chipDot, { backgroundColor: s.color }]} />
+            <Text style={[styles.chipText, selectedSubjectId === s.id && styles.chipTextSelected]}>{s.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Topic Picker */}
+      {availableTopics.length > 0 && (
+        <>
+          <Text style={styles.label}>Topic (optional)</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+            <TouchableOpacity
+              style={[styles.chip, !selectedTopicId && styles.chipSelected]}
+              onPress={() => setSelectedTopicId(null)}
+            >
+              <Text style={[styles.chipText, !selectedTopicId && styles.chipTextSelected]}>None</Text>
+            </TouchableOpacity>
+            {availableTopics.map((t) => (
+              <TouchableOpacity
+                key={t.id}
+                style={[styles.chip, selectedTopicId === t.id && styles.chipSelected]}
+                onPress={() => setSelectedTopicId(t.id)}
+              >
+                <Text style={[styles.chipText, selectedTopicId === t.id && styles.chipTextSelected]}>{t.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </>
+      )}
 
       {/* Action Buttons */}
       {processing ? (
@@ -118,7 +185,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2a2a4e",
   },
-  actions: { gap: 12 },
+  actions: { gap: 12, marginTop: 8 },
   processBtn: {
     backgroundColor: "#4A90D9",
     borderRadius: 12,
@@ -135,4 +202,23 @@ const styles = StyleSheet.create({
   cancelBtnText: { color: "#aaa", fontWeight: "500", fontSize: 14 },
   processingContainer: { alignItems: "center", paddingVertical: 30 },
   processingText: { color: "#4A90D9", marginTop: 12, fontSize: 14 },
+  chipScroll: { marginBottom: 16 },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a1a2e",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#2a2a4e",
+  },
+  chipSelected: {
+    backgroundColor: "#2d5aa0",
+    borderColor: "#4A90D9",
+  },
+  chipDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+  chipText: { color: "#ccc", fontSize: 13 },
+  chipTextSelected: { color: "#fff", fontWeight: "600" },
 });

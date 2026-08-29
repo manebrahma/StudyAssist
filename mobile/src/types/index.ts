@@ -126,6 +126,7 @@ export type RootStackParamList = {
   Preview: { imageUri: string };
   Chat: { sessionId: string; title: string };
   SessionDetail: { sessionId: string };
+  SubjectSessions: { subjectId: string; subjectName: string; topicId?: string; topicName?: string };
   Flashcards: { sessionId: string };
   Quiz: { sessionId: string };
 };
