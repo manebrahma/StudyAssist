@@ -11,7 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList, StudySession, HealthStatus } from "../types";
-import { getSessions, getHealth } from "../services/api";
+import { getSessions, getHealth, getReviewQueue } from "../services/api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -19,6 +19,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -30,8 +31,9 @@ export default function HomeScreen() {
       ]);
       setSessions(sessionsData);
       setHealth(healthData);
+      // Fetch review count (non-blocking)
+      getReviewQueue().then((q) => setReviewCount(q.length)).catch(() => {});
     } catch {
-      // Backend not available — show offline state
       setHealth(null);
     } finally {
       setLoading(false);
@@ -89,7 +91,9 @@ export default function HomeScreen() {
         >
           <Text style={styles.actionIcon}>🃏</Text>
           <Text style={styles.actionText}>Review</Text>
-          <Text style={styles.actionSub}>Flashcards due</Text>
+          <Text style={styles.actionSub}>
+            {reviewCount > 0 ? `${reviewCount} card${reviewCount !== 1 ? "s" : ""} due` : "All caught up"}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity

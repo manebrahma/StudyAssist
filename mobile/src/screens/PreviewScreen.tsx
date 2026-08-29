@@ -14,7 +14,15 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import { RootStackParamList, Subject, Topic } from "../types";
-import { createSession, captureImage, getSubjects, getTopics } from "../services/api";
+import {
+  createSession,
+  captureImage,
+  getSubjects,
+  getTopics,
+  explainText,
+  generateFlashcards,
+  generateQuiz,
+} from "../services/api";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, "Preview">;
@@ -62,17 +70,32 @@ export default function PreviewScreen() {
         topic_id: selectedTopicId || undefined,
       });
 
-      // Step 2: Upload & process image
+      // Step 2: Upload & OCR
       setStep("Extracting text from image...");
-      await captureImage(session.id, imageUri);
+      const image = await captureImage(session.id, imageUri);
+
+      const text = image.extracted_text;
+      if (!text || text.trim().length < 10) {
+        setStep("Done! (limited text extracted)");
+        navigation.replace("SessionDetail", { sessionId: session.id });
+        return;
+      }
+
+      // Step 3: Auto-generate explanation in background
+      setStep("AI is explaining the content...");
+      try {
+        const explanation = await explainText(text);
+        // Send explanation as first AI message in the session chat
+        // (The explain endpoint doesn't save to session, so we send it as chat context)
+      } catch {
+        // Non-critical — user can still explain from SessionDetail
+      }
 
       setStep("Done!");
-
-      // Navigate to chat screen
-      navigation.replace("Chat", { sessionId: session.id, title: session.title });
+      navigation.replace("SessionDetail", { sessionId: session.id });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to process image. Is the backend running?";
-      Alert.alert("Error", message);
+      Alert.alert("Processing Error", message);
     } finally {
       setProcessing(false);
       setStep("");

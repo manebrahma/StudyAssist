@@ -15,13 +15,11 @@ import {
   QuizResult,
   HealthStatus,
 } from "../types";
-
-// Change this to your backend server IP when testing on a real device
-const BASE_URL = "http://localhost:8000/api";
+import { CONFIG } from "../config";
 
 const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 30000,
+  baseURL: CONFIG.BACKEND_URL,
+  timeout: CONFIG.DEFAULT_TIMEOUT,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -80,26 +78,26 @@ export const captureImage = async (sessionId: string, imageUri: string) => {
   return api
     .post<SessionImage>("/capture", formData, {
       headers: { "Content-Type": "multipart/form-data" },
-      timeout: 60000,
+      timeout: CONFIG.UPLOAD_TIMEOUT,
     })
     .then((r) => r.data);
 };
 
 // ──── Chat ────
 export const sendMessage = (sessionId: string, message: string) =>
-  api.post<Message>("/chat", { session_id: sessionId, message }).then((r) => r.data);
+  api.post<Message>("/chat", { session_id: sessionId, message }, { timeout: CONFIG.AI_TIMEOUT }).then((r) => r.data);
 
 // ──── Explain / Summarize ────
 export const explainText = (text: string, level = "simple") =>
-  api.post<AIResponse>("/explain", { text, level }).then((r) => r.data);
+  api.post<AIResponse>("/explain", { text, level }, { timeout: CONFIG.AI_TIMEOUT }).then((r) => r.data);
 
 export const summarizeText = (text: string, length = "medium") =>
-  api.post<AIResponse>("/summarize", { text, length }).then((r) => r.data);
+  api.post<AIResponse>("/summarize", { text, length }, { timeout: CONFIG.AI_TIMEOUT }).then((r) => r.data);
 
 // ──── Flashcards ────
 export const generateFlashcards = (sessionId: string, text: string, count = 5) =>
   api
-    .post<Flashcard[]>("/flashcards/generate", { session_id: sessionId, text, count }, { timeout: 300000 })
+    .post<Flashcard[]>("/flashcards/generate", { session_id: sessionId, text, count }, { timeout: CONFIG.AI_TIMEOUT })
     .then((r) => r.data);
 
 export const getFlashcards = (params?: { session_id?: string; subject_id?: string; topic_id?: string }) =>
@@ -116,7 +114,7 @@ export const deleteFlashcard = (id: string) => api.delete(`/flashcards/${id}`);
 // ──── Quiz ────
 export const generateQuiz = (sessionId: string, text: string, questionType = "mcq", count = 5) =>
   api
-    .post<Quiz>("/quiz/generate", { session_id: sessionId, text, question_type: questionType, count }, { timeout: 300000 })
+    .post<Quiz>("/quiz/generate", { session_id: sessionId, text, question_type: questionType, count }, { timeout: CONFIG.AI_TIMEOUT })
     .then((r) => r.data);
 
 export const submitQuiz = (quizId: string, answers: { question_id: string; answer: string }[]) =>

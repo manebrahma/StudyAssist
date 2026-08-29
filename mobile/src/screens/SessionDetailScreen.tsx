@@ -8,13 +8,20 @@ import {
   Image,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
-import { RootStackParamList, SessionDetail } from "../types";
-import { getSession } from "../services/api";
+import { RootStackParamList, SessionDetail, Flashcard } from "../types";
+import {
+  getSession,
+  getFlashcards,
+  generateFlashcards,
+  summarizeText,
+} from "../services/api";
+import { CONFIG } from "../config";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, "SessionDetail">;
@@ -27,11 +34,18 @@ export default function SessionDetailScreen() {
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [flashcardCount, setFlashcardCount] = useState(0);
+  const [generatingCards, setGeneratingCards] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
 
   const fetchSession = useCallback(async () => {
     try {
-      const data = await getSession(sessionId);
+      const [data, cards] = await Promise.all([
+        getSession(sessionId),
+        getFlashcards({ session_id: sessionId }),
+      ]);
       setSession(data);
+      setFlashcardCount(cards.length);
     } catch {
       // offline
     } finally {
@@ -45,6 +59,42 @@ export default function SessionDetailScreen() {
       fetchSession();
     }, [fetchSession])
   );
+
+  const handleGenerateFlashcards = async () => {
+    if (!session?.extracted_text) {
+      Alert.alert("No Text", "No extracted text to generate flashcards from.");
+      return;
+    }
+    setGeneratingCards(true);
+    try {
+      const cards = await generateFlashcards(session.id, session.extracted_text, 5);
+      setFlashcardCount((c) => c + cards.length);
+      Alert.alert("Success", `${cards.length} flashcards generated!`, [
+        { text: "View", onPress: () => navigation.navigate("Flashcards", { sessionId: session.id }) },
+        { text: "OK" },
+      ]);
+    } catch {
+      Alert.alert("Error", "Failed to generate flashcards. AI may be busy.");
+    } finally {
+      setGeneratingCards(false);
+    }
+  };
+
+  const handleSummarize = async () => {
+    if (!session?.extracted_text) {
+      Alert.alert("No Text", "No extracted text to summarize.");
+      return;
+    }
+    setSummarizing(true);
+    try {
+      const result = await summarizeText(session.extracted_text);
+      Alert.alert("Summary", result.content);
+    } catch {
+      Alert.alert("Error", "Failed to generate summary. AI may be busy.");
+    } finally {
+      setSummarizing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -92,6 +142,10 @@ export default function SessionDetailScreen() {
           <Text style={styles.statNumber}>{messageCount}</Text>
           <Text style={styles.statLabel}>{messageCount === 1 ? "Message" : "Messages"}</Text>
         </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{flashcardCount}</Text>
+          <Text style={styles.statLabel}>{flashcardCount === 1 ? "Card" : "Cards"}</Text>
+        </View>
       </View>
 
       {/* Action Buttons */}
@@ -123,12 +177,31 @@ export default function SessionDetailScreen() {
 
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#e67e22" }]}
-          onPress={() => {}}
+          onPress={handleSummarize}
+          disabled={summarizing}
         >
-          <Text style={styles.actionIcon}>📝</Text>
-          <Text style={styles.actionText}>Summarize</Text>
+          <Text style={styles.actionIcon}>{summarizing ? "⏳" : "📝"}</Text>
+          <Text style={styles.actionText}>{summarizing ? "Summarizing..." : "Summarize"}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Generate Flashcards (if none exist and text available) */}
+      {flashcardCount === 0 && session.extracted_text && (
+        <TouchableOpacity
+          style={[styles.generateBtn, generatingCards && styles.generateBtnDisabled]}
+          onPress={handleGenerateFlashcards}
+          disabled={generatingCards}
+        >
+          {generatingCards ? (
+            <>
+              <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.generateBtnText}>Generating flashcards...</Text>
+            </>
+          ) : (
+            <Text style={styles.generateBtnText}>✨ Generate Flashcards from Text</Text>
+          )}
+        </TouchableOpacity>
+      )}
 
       {/* Captured Images */}
       {imageCount > 0 && (
@@ -138,7 +211,7 @@ export default function SessionDetailScreen() {
             {session.images.map((img) => (
               <View key={img.id} style={styles.imageCard}>
                 <Image
-                  source={{ uri: `http://localhost:8000/${img.file_path}` }}
+                  source={{ uri: `${CONFIG.BACKEND_STATIC_URL}/${img.file_path}` }}
                   style={styles.thumbnail}
                   resizeMode="cover"
                 />
@@ -230,6 +303,17 @@ const styles = StyleSheet.create({
   },
   actionIcon: { fontSize: 24, marginBottom: 6 },
   actionText: { color: "#fff", fontWeight: "600", fontSize: 13 },
+  generateBtn: {
+    backgroundColor: "#8e44ad",
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  generateBtnDisabled: { opacity: 0.6 },
+  generateBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
   imageScroll: { marginBottom: 16 },
   imageCard: { marginRight: 10, position: "relative" },
   thumbnail: {
