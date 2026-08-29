@@ -1,0 +1,19 @@
+# Core
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+pydantic==2.*
+pydantic-settings==2.*
+
+# Database
+sqlalchemy[asyncio]==2.*
+aiosqlite==0.20.*
+
+# Image processing
+Pillow==11.*
+pytesseract==0.3.*
+
+# HTTP client (for Ollama)
+httpx==0.28.*
+
+# File uploads
+python-multipart==0.0.*
