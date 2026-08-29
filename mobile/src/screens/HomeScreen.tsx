@@ -85,7 +85,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={[styles.actionCard, { backgroundColor: "#8e44ad" }]}
-          onPress={() => {}}
+          onPress={() => navigation.navigate("FlashcardReview")}
         >
           <Text style={styles.actionIcon}>🃏</Text>
           <Text style={styles.actionText}>Review</Text>

@@ -13,6 +13,10 @@ import PreviewScreen from "../screens/PreviewScreen";
 import ChatScreen from "../screens/ChatScreen";
 import SessionDetailScreen from "../screens/SessionDetailScreen";
 import SubjectSessionsScreen from "../screens/SubjectSessionsScreen";
+import FlashcardScreen from "../screens/FlashcardScreen";
+import FlashcardReviewScreen from "../screens/FlashcardReviewScreen";
+import QuizScreen from "../screens/QuizScreen";
+import QuizResultScreen from "../screens/QuizResultScreen";
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -85,6 +89,10 @@ export default function AppNavigator() {
               : route.params.subjectName,
           })}
         />
+        <Stack.Screen name="Flashcards" component={FlashcardScreen} options={{ title: "Flashcards" }} />
+        <Stack.Screen name="FlashcardReview" component={FlashcardReviewScreen} options={{ title: "Daily Review" }} />
+        <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: "Quiz" }} />
+        <Stack.Screen name="QuizResult" component={QuizResultScreen} options={{ title: "Quiz Results" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

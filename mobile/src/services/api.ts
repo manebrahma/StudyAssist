@@ -10,6 +10,9 @@ import {
   SessionImage,
   Message,
   AIResponse,
+  Flashcard,
+  Quiz,
+  QuizResult,
   HealthStatus,
 } from "../types";
 
@@ -92,5 +95,34 @@ export const explainText = (text: string, level = "simple") =>
 
 export const summarizeText = (text: string, length = "medium") =>
   api.post<AIResponse>("/summarize", { text, length }).then((r) => r.data);
+
+// ──── Flashcards ────
+export const generateFlashcards = (sessionId: string, text: string, count = 5) =>
+  api
+    .post<Flashcard[]>("/flashcards/generate", { session_id: sessionId, text, count }, { timeout: 300000 })
+    .then((r) => r.data);
+
+export const getFlashcards = (params?: { session_id?: string; subject_id?: string; topic_id?: string }) =>
+  api.get<Flashcard[]>("/flashcards", { params }).then((r) => r.data);
+
+export const getReviewQueue = () =>
+  api.get<Flashcard[]>("/flashcards/review").then((r) => r.data);
+
+export const reviewFlashcard = (id: string, quality: number) =>
+  api.put<Flashcard>(`/flashcards/${id}/review`, { quality }).then((r) => r.data);
+
+export const deleteFlashcard = (id: string) => api.delete(`/flashcards/${id}`);
+
+// ──── Quiz ────
+export const generateQuiz = (sessionId: string, text: string, questionType = "mcq", count = 5) =>
+  api
+    .post<Quiz>("/quiz/generate", { session_id: sessionId, text, question_type: questionType, count }, { timeout: 300000 })
+    .then((r) => r.data);
+
+export const submitQuiz = (quizId: string, answers: { question_id: string; answer: string }[]) =>
+  api.post<QuizResult>(`/quiz/${quizId}/submit`, { answers }).then((r) => r.data);
+
+export const getQuizHistory = (sessionId?: string) =>
+  api.get<Quiz[]>("/quiz/history", { params: sessionId ? { session_id: sessionId } : {} }).then((r) => r.data);
 
 export default api;

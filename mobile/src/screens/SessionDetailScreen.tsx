@@ -107,7 +107,7 @@ export default function SessionDetailScreen() {
 
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#8e44ad" }]}
-          onPress={() => {}}
+          onPress={() => navigation.navigate("Flashcards", { sessionId: session.id })}
         >
           <Text style={styles.actionIcon}>🃏</Text>
           <Text style={styles.actionText}>Flashcards</Text>
@@ -115,7 +115,7 @@ export default function SessionDetailScreen() {
 
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#27ae60" }]}
-          onPress={() => {}}
+          onPress={() => navigation.navigate("Quiz", { sessionId: session.id })}
         >
           <Text style={styles.actionIcon}>❓</Text>
           <Text style={styles.actionText}>Take Quiz</Text>

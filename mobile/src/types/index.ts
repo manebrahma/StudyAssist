@@ -104,6 +104,23 @@ export interface Quiz {
   created_at: string;
 }
 
+export interface QuizResultQuestion {
+  question_id: string;
+  question: string;
+  student_answer: string;
+  correct_answer: string;
+  is_correct: boolean;
+  explanation: string;
+}
+
+export interface QuizResult {
+  quiz_id: string;
+  score: number;
+  total_questions: number;
+  correct_count: number;
+  results: QuizResultQuestion[];
+}
+
 // ──── Health ────
 export interface HealthStatus {
   status: string;
@@ -128,5 +145,7 @@ export type RootStackParamList = {
   SessionDetail: { sessionId: string };
   SubjectSessions: { subjectId: string; subjectName: string; topicId?: string; topicName?: string };
   Flashcards: { sessionId: string };
+  FlashcardReview: undefined;
   Quiz: { sessionId: string };
+  QuizResult: { quizId: string; result: QuizResult };
 };
