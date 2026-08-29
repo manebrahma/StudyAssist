@@ -126,6 +126,7 @@ export interface HealthStatus {
   status: string;
   version: string;
   ollama_status: string;
+  ocr_status: string;
   database_status: string;
 }
 

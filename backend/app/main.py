@@ -9,6 +9,7 @@ from app.config import get_settings
 from app.models.database import init_db
 from app.models.schemas import HealthResponse
 from app.services.llm_service import llm_service
+from app.services.ocr_service import ocr_service
 from app.api.routes import subjects, sessions, capture, chat, flashcards, quiz
 
 settings = get_settings()
@@ -67,9 +68,11 @@ app.include_router(quiz.router)
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check():
     ollama_ok = await llm_service.is_available()
+    ocr_ok = await ocr_service.is_available()
     return HealthResponse(
         status="healthy",
         version=settings.app_version,
         ollama_status="connected" if ollama_ok else "unavailable",
+        ocr_status="connected" if ocr_ok else "unavailable",
         database_status="connected",  # If we got here, DB is fine
     )

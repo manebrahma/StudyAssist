@@ -178,4 +178,5 @@ class HealthResponse(BaseModel):
     status: str
     version: str
     ollama_status: str
+    ocr_status: str
     database_status: str

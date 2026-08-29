@@ -68,7 +68,7 @@ export default function HomeScreen() {
         <Text style={styles.statusDot}>{health ? "🟢" : "🔴"}</Text>
         <Text style={styles.statusText}>
           {health
-            ? `Backend connected · AI: ${health.ollama_status}`
+            ? `Backend connected · AI: ${health.ollama_status} · OCR: ${health.ocr_status}`
             : "Backend offline — start the server"}
         </Text>
       </View>

@@ -1,5 +1,5 @@
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 import io
 import uuid
 
@@ -47,4 +47,36 @@ def preprocess_image(image_bytes: bytes) -> bytes:
 
     buffer = io.BytesIO()
     img.save(buffer, format="JPEG", quality=90)
+    return buffer.getvalue()
+
+
+def preprocess_for_ocr(image_bytes: bytes) -> bytes:
+    """Enhanced preprocessing for better OCR accuracy."""
+    img = Image.open(io.BytesIO(image_bytes))
+
+    # Convert to grayscale
+    img = img.convert("L")
+
+    # Enhance contrast
+    enhancer = ImageEnhance.Contrast(img)
+    img = enhancer.enhance(1.5)
+
+    # Sharpen
+    img = img.filter(ImageFilter.SHARPEN)
+
+    # Resize small images up for better OCR (Tesseract works best ≥300 DPI)
+    min_dim = min(img.size)
+    if min_dim < 300:
+        scale = 300 / min_dim
+        img = img.resize(
+            (int(img.width * scale), int(img.height * scale)),
+            Image.Resampling.LANCZOS,
+        )
+
+    # Resize if too large
+    if max(img.size) > MAX_DIMENSION:
+        img.thumbnail((MAX_DIMENSION, MAX_DIMENSION), Image.Resampling.LANCZOS)
+
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
     return buffer.getvalue()

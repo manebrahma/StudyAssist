@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     ollama_vision_model: str = "llava"
     ollama_timeout: int = 300  # seconds — phi3 on CPU can be slow
 
+    # Tesseract OCR (Docker: hertzg/tesseract-server)
+    tesseract_url: str = "http://localhost:8080/tesseract"
+    tesseract_timeout: int = 30  # seconds
+
     # File uploads
     upload_dir: str = "uploads"
     max_upload_size: int = 10 * 1024 * 1024  # 10MB

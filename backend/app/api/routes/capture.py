@@ -7,7 +7,7 @@ from app.models.db_models import StudySession, SessionImage
 from app.models.schemas import ImageResponse
 from app.services.ocr_service import ocr_service
 from app.services.vision_service import vision_service
-from app.utils.image_utils import validate_image, generate_filename, preprocess_image
+from app.utils.image_utils import validate_image, generate_filename, preprocess_image, preprocess_for_ocr
 from app.config import get_settings
 
 settings = get_settings()
@@ -42,11 +42,14 @@ async def capture_image(
     file_path = upload_dir / filename
     file_path.write_bytes(processed)
 
+    # Preprocess for OCR (grayscale, contrast, sharpen)
+    ocr_ready = preprocess_for_ocr(content)
+
     # Extract text — try Tesseract first, fallback to LLaVA
     extracted_text = ""
     ocr_method = "tesseract"
     try:
-        extracted_text = await ocr_service.extract_text(processed)
+        extracted_text = await ocr_service.extract_text(ocr_ready)
     except Exception:
         pass
 
