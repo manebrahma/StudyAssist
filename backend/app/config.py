@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 from pathlib import Path
 
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+
 
 class Settings(BaseSettings):
     # App
@@ -14,7 +16,7 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # Database
-    database_url: str = "sqlite+aiosqlite:///./studyassist.db"
+    database_url: str = f"sqlite+aiosqlite:///{(BACKEND_DIR / 'studyassist.db').as_posix()}"
 
     # Ollama
     ollama_base_url: str = "http://localhost:11434"
@@ -27,11 +29,11 @@ class Settings(BaseSettings):
     tesseract_timeout: int = 30  # seconds
 
     # File uploads
-    upload_dir: str = "uploads"
+    upload_dir: str = str(BACKEND_DIR / "uploads")
     max_upload_size: int = 10 * 1024 * 1024  # 10MB
 
     # Chapter PDF uploads
-    document_upload_dir: str = "uploads/documents"
+    document_upload_dir: str = str(BACKEND_DIR / "uploads" / "documents")
     max_pdf_upload_size: int = 25 * 1024 * 1024  # 25MB
     max_pdf_pages: int = 100
     pdf_generation_chunk_size: int = 9000
