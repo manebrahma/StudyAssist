@@ -43,6 +43,8 @@ export default function CameraScreen() {
     }
   };
 
+  const openPdfUpload = () => navigation.navigate("PdfUpload");
+
   if (!permission) {
     return (
       <View style={styles.center}>
@@ -64,6 +66,9 @@ export default function CameraScreen() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.galleryLink} onPress={pickImage}>
           <Text style={styles.galleryLinkText}>Or pick from gallery</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.pdfLink} onPress={openPdfUpload}>
+          <Text style={styles.pdfLinkText}>Import a chapter PDF</Text>
         </TouchableOpacity>
       </View>
     );
@@ -92,7 +97,9 @@ export default function CameraScreen() {
             <View style={styles.captureBtnInner} />
           </TouchableOpacity>
 
-          <View style={{ width: 50 }} />
+          <TouchableOpacity style={styles.galleryBtn} onPress={openPdfUpload}>
+            <Text style={styles.galleryBtnText}>PDF</Text>
+          </TouchableOpacity>
         </View>
       </CameraView>
     </View>
@@ -123,6 +130,8 @@ const styles = StyleSheet.create({
   permButtonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
   galleryLink: { marginTop: 16 },
   galleryLinkText: { color: "#4A90D9", fontSize: 14 },
+  pdfLink: { marginTop: 12 },
+  pdfLinkText: { color: "#A8D8A8", fontSize: 14 },
   // Camera controls
   topBar: {
     flexDirection: "row",

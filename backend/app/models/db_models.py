@@ -49,6 +49,7 @@ class StudySession(Base):
     subject: Mapped["Subject | None"] = relationship(back_populates="sessions")
     topic: Mapped["Topic | None"] = relationship(back_populates="sessions")
     images: Mapped[list["SessionImage"]] = relationship(back_populates="session", cascade="all, delete-orphan")
+    documents: Mapped[list["SessionDocument"]] = relationship(back_populates="session", cascade="all, delete-orphan")
     messages: Mapped[list["Message"]] = relationship(back_populates="session", cascade="all, delete-orphan")
     flashcards: Mapped[list["Flashcard"]] = relationship(back_populates="session", cascade="all, delete-orphan")
     quizzes: Mapped[list["Quiz"]] = relationship(back_populates="session", cascade="all, delete-orphan")
@@ -65,6 +66,20 @@ class SessionImage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     session: Mapped["StudySession"] = relationship(back_populates="images")
+
+
+class SessionDocument(Base):
+    __tablename__ = "session_documents"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=generate_uuid)
+    session_id: Mapped[str] = mapped_column(ForeignKey("study_sessions.id"), nullable=False)
+    filename: Mapped[str] = mapped_column(String(300), nullable=False)
+    file_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    page_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    extracted_characters: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    session: Mapped["StudySession"] = relationship(back_populates="documents")
 
 
 class MessageRole(str, enum.Enum):

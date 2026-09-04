@@ -11,6 +11,7 @@ aiosqlite==0.20.*
 # Image processing
 Pillow==11.*
 pytesseract==0.3.*
+pypdf==5.*
 
 # HTTP client (for Ollama)
 httpx==0.28.*

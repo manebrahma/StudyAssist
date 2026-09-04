@@ -10,6 +10,7 @@ import CameraScreen from "../screens/CameraScreen";
 import SubjectsScreen from "../screens/SubjectsScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import PreviewScreen from "../screens/PreviewScreen";
+import PdfUploadScreen from "../screens/PdfUploadScreen";
 import ChatScreen from "../screens/ChatScreen";
 import SessionDetailScreen from "../screens/SessionDetailScreen";
 import SubjectSessionsScreen from "../screens/SubjectSessionsScreen";
@@ -78,6 +79,7 @@ export default function AppNavigator() {
           options={{ headerShown: false }}
         />
         <Stack.Screen name="Preview" component={PreviewScreen} options={{ title: "Preview" }} />
+        <Stack.Screen name="PdfUpload" component={PdfUploadScreen} options={{ title: "Import Chapter PDF" }} />
         <Stack.Screen name="Chat" component={ChatScreen} options={({ route }) => ({ title: route.params.title })} />
         <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{ title: "Session" }} />
         <Stack.Screen

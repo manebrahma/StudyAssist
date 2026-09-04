@@ -14,5 +14,5 @@ export const CONFIG = {
   // Timeouts (ms)
   DEFAULT_TIMEOUT: 30_000,
   AI_TIMEOUT: 300_000, // 5 min for AI generation on CPU
-  UPLOAD_TIMEOUT: 60_000,
+  UPLOAD_TIMEOUT: 300_000,
 };

@@ -8,6 +8,7 @@ import {
   SessionCreate,
   SessionDetail,
   SessionImage,
+  PdfUploadResult,
   Message,
   AIResponse,
   Flashcard,
@@ -79,6 +80,31 @@ export const captureImage = async (sessionId: string, imageUri: string) => {
     .post<SessionImage>("/capture", formData, {
       headers: { "Content-Type": "multipart/form-data" },
       timeout: CONFIG.UPLOAD_TIMEOUT,
+    })
+    .then((r) => r.data);
+};
+
+// ──── Chapter PDFs ────
+export const uploadChapterPdf = async (
+  file: { uri: string; name: string; mimeType?: string | null },
+  title: string,
+  subjectId?: string,
+  topicId?: string,
+) => {
+  const formData = new FormData();
+  formData.append("title", title);
+  if (subjectId) formData.append("subject_id", subjectId);
+  if (topicId) formData.append("topic_id", topicId);
+  formData.append("file", {
+    uri: file.uri,
+    name: file.name,
+    type: file.mimeType || "application/pdf",
+  } as unknown as Blob);
+
+  return api
+    .post<PdfUploadResult>("/documents/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: CONFIG.AI_TIMEOUT,
     })
     .then((r) => r.data);
 };

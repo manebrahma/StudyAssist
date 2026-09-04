@@ -10,7 +10,7 @@ from app.models.database import init_db
 from app.models.schemas import HealthResponse
 from app.services.llm_service import llm_service
 from app.services.ocr_service import ocr_service
-from app.api.routes import subjects, sessions, capture, chat, flashcards, quiz
+from app.api.routes import subjects, sessions, capture, chat, flashcards, quiz, documents
 
 settings = get_settings()
 
@@ -63,6 +63,7 @@ app.include_router(capture.router)
 app.include_router(chat.router)
 app.include_router(flashcards.router)
 app.include_router(quiz.router)
+app.include_router(documents.router)
 
 
 @app.get("/api/health", response_model=HealthResponse)

@@ -55,6 +55,7 @@ class SessionResponse(BaseModel):
 
 class SessionDetailResponse(SessionResponse):
     images: list["ImageResponse"] = []
+    documents: list["DocumentResponse"] = []
     messages: list["MessageResponse"] = []
 
 
@@ -66,6 +67,19 @@ class ImageResponse(BaseModel):
     file_path: str
     extracted_text: str | None
     ocr_method: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ──── Documents ────
+
+class DocumentResponse(BaseModel):
+    id: str
+    session_id: str
+    filename: str
+    page_count: int
+    extracted_characters: int
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -170,6 +184,13 @@ class QuizResultResponse(BaseModel):
     total_questions: int
     correct_count: int
     results: list[dict]  # Per-question result with correct answer + explanation
+
+
+class PdfUploadResponse(BaseModel):
+    session: SessionResponse
+    document: DocumentResponse
+    flashcards: list[FlashcardResponse]
+    quiz: QuizResponse
 
 
 # ──── Health ────

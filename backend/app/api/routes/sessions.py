@@ -1,10 +1,12 @@
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models.database import get_db
-from app.models.db_models import StudySession
+from app.models.db_models import SessionDocument, StudySession
 from app.models.schemas import SessionCreate, SessionResponse, SessionDetailResponse
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
@@ -42,7 +44,11 @@ async def create_session(data: SessionCreate, db: AsyncSession = Depends(get_db)
 async def get_session(session_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(StudySession)
-        .options(selectinload(StudySession.images), selectinload(StudySession.messages))
+        .options(
+            selectinload(StudySession.images),
+            selectinload(StudySession.documents),
+            selectinload(StudySession.messages),
+        )
         .where(StudySession.id == session_id)
     )
     session = result.scalar_one_or_none()
@@ -56,5 +62,15 @@ async def delete_session(session_id: str, db: AsyncSession = Depends(get_db)):
     session = await db.get(StudySession, session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    document_paths = list(
+        (await db.execute(select(SessionDocument.file_path).where(SessionDocument.session_id == session_id)))
+        .scalars()
+    )
     await db.delete(session)
     await db.commit()
+    for document_path in document_paths:
+        try:
+            Path(document_path).unlink(missing_ok=True)
+        except OSError:
+            pass

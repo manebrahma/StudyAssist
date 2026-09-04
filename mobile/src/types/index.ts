@@ -42,6 +42,7 @@ export interface SessionCreate {
 
 export interface SessionDetail extends StudySession {
   images: SessionImage[];
+  documents: SessionDocument[];
   messages: Message[];
 }
 
@@ -53,6 +54,22 @@ export interface SessionImage {
   extracted_text: string | null;
   ocr_method: string | null;
   created_at: string;
+}
+
+export interface SessionDocument {
+  id: string;
+  session_id: string;
+  filename: string;
+  page_count: number;
+  extracted_characters: number;
+  created_at: string;
+}
+
+export interface PdfUploadResult {
+  session: StudySession;
+  document: SessionDocument;
+  flashcards: Flashcard[];
+  quiz: Quiz;
 }
 
 // ──── Message ────
@@ -142,6 +159,7 @@ export type RootTabParamList = {
 export type RootStackParamList = {
   MainTabs: undefined;
   Preview: { imageUri: string };
+  PdfUpload: undefined;
   Chat: { sessionId: string; title: string };
   SessionDetail: { sessionId: string };
   SubjectSessions: { subjectId: string; subjectName: string; topicId?: string; topicName?: string };

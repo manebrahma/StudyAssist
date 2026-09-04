@@ -83,8 +83,12 @@ class LLMService:
                 response = await client.get(f"{self.base_url}/api/tags")
                 if response.status_code == 200:
                     models = response.json().get("models", [])
-                    model_names = [m.get("name", "").split(":")[0] for m in models]
-                    return self.text_model in model_names
+                    model_names = {m.get("name", "") for m in models}
+                    model_bases = {name.split(":")[0] for name in model_names}
+                    return (
+                        self.text_model in model_names
+                        or self.text_model.split(":")[0] in model_bases
+                    )
                 return False
         except Exception:
             return False

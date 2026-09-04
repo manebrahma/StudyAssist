@@ -114,6 +114,7 @@ export default function SessionDetailScreen() {
 
   const messageCount = session.messages?.length || 0;
   const imageCount = session.images?.length || 0;
+  const documentCount = session.documents?.length || 0;
 
   return (
     <ScrollView
@@ -224,6 +225,24 @@ export default function SessionDetailScreen() {
         </>
       )}
 
+      {/* Imported Documents */}
+      {documentCount > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Chapter PDFs</Text>
+          {session.documents.map((document) => (
+            <View key={document.id} style={styles.documentCard}>
+              <Text style={styles.documentIcon}>PDF</Text>
+              <View style={styles.documentInfo}>
+                <Text style={styles.documentName} numberOfLines={1}>{document.filename}</Text>
+                <Text style={styles.documentMeta}>
+                  {document.page_count} pages · {document.extracted_characters.toLocaleString()} characters extracted
+                </Text>
+              </View>
+            </View>
+          ))}
+        </>
+      )}
+
       {/* Extracted Text */}
       {session.extracted_text && (
         <>
@@ -314,6 +333,18 @@ const styles = StyleSheet.create({
   },
   generateBtnDisabled: { opacity: 0.6 },
   generateBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  documentCard: {
+    backgroundColor: "#1a1a2e",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  documentIcon: { color: "#E74C3C", fontWeight: "800", fontSize: 12, marginRight: 12 },
+  documentInfo: { flex: 1 },
+  documentName: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  documentMeta: { color: "#888", fontSize: 12, marginTop: 4 },
   imageScroll: { marginBottom: 16 },
   imageCard: { marginRight: 10, position: "relative" },
   thumbnail: {
