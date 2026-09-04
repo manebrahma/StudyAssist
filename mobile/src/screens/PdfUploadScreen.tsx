@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
+import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -71,7 +72,11 @@ export default function PdfUploadScreen() {
       setProgress("Done");
       navigation.replace("SessionDetail", { sessionId: result.session.id });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Could not process the PDF.";
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.detail || error.message
+        : error instanceof Error
+          ? error.message
+          : "Could not process the PDF.";
       Alert.alert("PDF import failed", message);
     } finally {
       setUploading(false);
