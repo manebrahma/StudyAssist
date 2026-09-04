@@ -123,7 +123,7 @@ class AIResponse(BaseModel):
 
 class FlashcardGenerateRequest(BaseModel):
     session_id: str
-    text: str = Field(..., min_length=1, max_length=10000)
+    text: str | None = Field(default=None, max_length=10000)
     count: int = Field(default=5, ge=1, le=20)
 
 

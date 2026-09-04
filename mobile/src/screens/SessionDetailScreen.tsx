@@ -67,7 +67,7 @@ export default function SessionDetailScreen() {
     }
     setGeneratingCards(true);
     try {
-      const cards = await generateFlashcards(session.id, session.extracted_text, 5);
+      const cards = await generateFlashcards(session.id, undefined, 10);
       setFlashcardCount((c) => c + cards.length);
       Alert.alert("Success", `${cards.length} flashcards generated!`, [
         { text: "View", onPress: () => navigation.navigate("Flashcards", { sessionId: session.id }) },

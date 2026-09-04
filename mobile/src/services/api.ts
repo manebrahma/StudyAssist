@@ -121,7 +121,7 @@ export const summarizeText = (text: string, length = "medium") =>
   api.post<AIResponse>("/summarize", { text, length }, { timeout: CONFIG.AI_TIMEOUT }).then((r) => r.data);
 
 // ──── Flashcards ────
-export const generateFlashcards = (sessionId: string, text: string, count = 5) =>
+export const generateFlashcards = (sessionId: string, text?: string, count = 5) =>
   api
     .post<Flashcard[]>("/flashcards/generate", { session_id: sessionId, text, count }, { timeout: CONFIG.AI_TIMEOUT })
     .then((r) => r.data);

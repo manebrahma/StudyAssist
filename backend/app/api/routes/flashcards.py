@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.config import get_settings
 from app.models.database import get_db
 from app.models.db_models import Flashcard, StudySession
 from app.models.schemas import (
@@ -12,8 +13,10 @@ from app.models.schemas import (
     FlashcardReviewRequest,
 )
 from app.services.flashcard_service import generate_flashcards
+from app.services.pdf_service import generation_chunks
 from app.utils.spaced_repetition import sm2
 
+settings = get_settings()
 router = APIRouter(prefix="/api/flashcards", tags=["flashcards"])
 
 
@@ -25,7 +28,8 @@ async def generate(data: FlashcardGenerateRequest, db: AsyncSession = Depends(ge
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    # Use session extracted text if no text provided
+    # Use session extracted text if no text is supplied. This supports PDF chapters,
+    # whose text is commonly longer than the request body's direct-text limit.
     text = data.text
     if not text and session.extracted_text:
         text = session.extracted_text
@@ -33,7 +37,12 @@ async def generate(data: FlashcardGenerateRequest, db: AsyncSession = Depends(ge
         raise HTTPException(status_code=400, detail="No text available to generate flashcards from")
 
     try:
-        cards_data = await generate_flashcards(text, data.count)
+        chunks = generation_chunks(text, settings.pdf_generation_chunk_size)
+        cards_per_chunk = -(-data.count // len(chunks))
+        cards_data = []
+        for chunk in chunks:
+            cards_data.extend(await generate_flashcards(chunk, cards_per_chunk))
+        cards_data = _unique_by_front(cards_data)[:data.count]
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"AI service unavailable: {str(e)}")
 
@@ -126,3 +135,14 @@ async def delete_flashcard(flashcard_id: str, db: AsyncSession = Depends(get_db)
         raise HTTPException(status_code=404, detail="Flashcard not found")
     await db.delete(fc)
     await db.commit()
+
+
+def _unique_by_front(cards: list[dict]) -> list[dict]:
+    seen = set()
+    unique_cards = []
+    for card in cards:
+        front = str(card.get("front", "")).strip().lower()
+        if front and front not in seen:
+            seen.add(front)
+            unique_cards.append(card)
+    return unique_cards
